@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import useWeatherDebounce from '../hooks/useWeatherDebounce.js';
+import React, { useEffect, useState } from 'react';
+import apiClient from '../utils/API.js';
+import { API_KEY, UNIT, BASE_URL} from '../utils/constants.js';
 
 //---------------------------------------------------------------------------------------
 //                                  WEATHER COMPONENT
@@ -11,28 +12,36 @@ const WeatherReport = ({ chosenLocation }) => {
     const [ error, setError ] = useState(null);
 
 //---------------------------------------------------------------------------------------
-//                             HOOK FOR DEBOUNCING API CALLS
+//                             FETCH WEATHER DATA FROM API
 //---------------------------------------------------------------------------------------
     
-    useWeatherDebounce(
+    useEffect(() => {
 
-        chosenLocation,
-        500,
-        (data) => {
+        const fetchWeather = async () => {
 
-            console.log('Weather has been captured successfully: ', data);
-            setWeatherData(data);
-            setError(null);
+            try{
 
-        },
+                const response = await apiClient.get(`${BASE_URL}/weather`, {
+                    params: {
+                        q: chosenLocation,
+                        appid: API_KEY,
+                        units: UNIT,
+                    },
+                });
 
-        (err) => {
+                setWeatherData(response.data);
+                setError(null);
 
-            console.log('Error fetching weather data: ', err);
-            setError(err);
-            setWeatherData(null);
-        }
-    );
+            } catch (err) {
+                console.error('---API ERROR: ', err);
+                setError('--- CITY NOT FOUND.');
+                setWeatherData(null);
+            }
+        };
+
+            fetchWeather();
+        
+    }, [chosenLocation]);
 
 //---------------------------------------------------------------------------------------
 //                             ERROR STATE RENDERING
@@ -42,37 +51,40 @@ const WeatherReport = ({ chosenLocation }) => {
 
         return(
 
-            <div>
-                <p className="error-message">{error}</p>
-                <button onClick={() => setError(null)} className="retry-btn">
-                    Retry
-                </button>
+            <div style={{ color: 'red', textAlign: 'center'}}>
+                <p>{error}</p>
             </div>
         );
-
-            
+     
     }
 
 //---------------------------------------------------------------------------------------
 //                             MAIN RENDERING LOGIC
 //---------------------------------------------------------------------------------------
-    
+    if (!weatherData) {
+        return <p style={{ textAlign: 'center'}}> Fetching weather data for you...</p>;
+    }
+
     return (
 
-        <div className = "weather-container">
-            {weatherData ?( 
-            <>
-                <h1> WEATHER IN { weatherData.name }</h1>
+        <div 
+        style={{ 
+            margin: '20px', 
+            padding: '20px', 
+            backgroundColor: '#f9f9f9',
+            borderRadius: '10px',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+            textAlign: 'center',
+            
+            }}>
+                <h2> WEATHER IN { weatherData.name }</h2>
                 <p> TEMPERATURE: { weatherData.main.temp }</p>
                 <p> CURRENT CONDITIONS: { weatherData.weather[0].description }</p>
                 <img
                     src = {`http://openweathermap.org/img/wn/${weatherData.weather[0].icon }.png`}
                     alt = "weather icon"
                  />
-            </>
-            ) : (
-                    <p>...syncing with the sky...one moment...</p>
-            )}
+
         </div>
     );
 };

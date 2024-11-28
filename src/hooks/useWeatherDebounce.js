@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../utils/API';
+import { API_KEY, UNIT } from '../utils/constants';
 
 //---------------------------------------------------------------------------------------
 //              HOOK TO DEBOUNCE API CALL -- VALUE AND DELAY BASIS
@@ -10,7 +11,7 @@ import apiClient from '../utils/API';
 //    @param { functio } onError -- callback for error handling
 //-----------------------------------------------------------------------------------------
 
- const useWeatherDebounce = (query, delay, onPass, onError) => {
+ const useWeatherDebounce = (query, delay, onPass) => {
 
 
     const [ debouncedQuery, setDebouncedQuery ] = useState(query);
@@ -22,6 +23,7 @@ import apiClient from '../utils/API';
 
          setDebouncedQuery(query);
 
+
       }, delay);
 
       return () => {
@@ -30,7 +32,7 @@ import apiClient from '../utils/API';
 
       };
 
-    }, [ query, delay, onPass, onError ]);
+    }, [ query, delay]);
 
     useEffect(() => {
 
@@ -45,8 +47,8 @@ import apiClient from '../utils/API';
 
                params: {
                   q: debouncedQuery,
-                  appid: '30a1ffed1e61fc31dd8a6a8670b1b7f9',
-                  units: 'metric',
+                  appid: API_KEY,
+                  units: UNIT,
                },
             });
 
@@ -54,14 +56,14 @@ import apiClient from '../utils/API';
 
          } catch (err) {
 
-            onError(err.message); //<--- from the API
+            console.error('Something...isnt working...', err.message); //<--- from the API
          }
 
       };
 
       fetchWeatherData();
 
-    }, [ debouncedQuery, query, onPass, onError ]);
+    }, [ debouncedQuery, onPass]);
  };
 
  export default useWeatherDebounce; 
